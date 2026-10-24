@@ -42,88 +42,7 @@
 
 Scope (\_SB)
 {
-	/*
-	 * Define PCH ACPIBASE IO as an ACPI operating region. The base address can be
-	 * found in Device 31, Function 2, Offset 40h.
-	 */
-	OperationRegion (PMIO, SystemIO, ACPI_BASE_ADDRESS, 0x80)
-	Field (PMIO, ByteAcc, NoLock, Preserve) {
-		Offset(0x6C),   /* 0x6C, General Purpose Event 0 Status [127:96] */
-		    ,  19,
-		CPWS,  1,       /* CPU WAKE STATUS */
-		Offset(0x7C),   /* 0x7C, General Purpose Event 0 Enable [127:96] */
-		    ,  19,
-		CPWE,  1        /* CPU WAKE EN */
-	}
-
-	Name (C2PW, 0)  /* Set default value to 0. */
-
-	/*
-	 * C2PM (CPU to PCH Method)
-	 *
-	 * This object is Enable/Disable GPE_CPU_WAKE_EN.
-	 * Arguments: (4)
-	 * Arg0 - An Integer containing the device wake capability
-	 * Arg1 - An Integer containing the target system state
-	 * Arg2 - An Integer containing the target device state
-	 * Arg3 - An Integer containing the request device type
-	 * Return Value:
-	 * return 0
-	 */
-	Method (C2PM, 4, NotSerialized)
-	{
-		Local0 = 1 << Arg3
-		/* This method is used to enable/disable wake from Tcss Device (WKEN). */
-		If (Arg0 && Arg1)
-		{  /* If entering Sx and enabling wake, need to enable WAKE capability. */
-			If (CPWE == 0) {  /* If CPU WAKE EN is not set, Set it. */
-				If (CPWS) {  /* If CPU WAKE STATUS is set, Clear it. */
-					/* Clear CPU WAKE STATUS by writing 1. */
-					CPWS = 1
-				}
-				CPWE = 1  /* Set CPU WAKE EN by writing 1. */
-			}
-			If ((C2PW & Local0) == 0) {
-				/* Set Corresponding Device En BIT in C2PW. */
-				C2PW |= Local0
-			}
-		} Else {  /* If Staying in S0 or Disabling Wake. */
-			If (Arg0 || Arg2) {  /* Check if Exiting D0 and arming for wake. */
-				/* If CPU WAKE EN is not set, Set it. */
-				If (CPWE == 0) {
-					/* If CPU WAKE STATUS is set, Clear it. */
-					If (CPWS) {
-						/* Clear CPU WAKE STATUS by writing 1. */
-						CPWS = 1
-					}
-					CPWE = 1  /* Set CPU WAKE EN by writing 1. */
-				}
-				If ((C2PW & Local0) == 0) {
-					/* Set Corresponding Device En BIT in C2PW. */
-					C2PW |= Local0
-				}
-			} Else {
-				/*
-				 * Disable runtime PME, either because staying in D0 or
-				 * disabling wake.
-				 */
-				If ((C2PW & Local0) != 0) {
-					/*
-					 * Clear Corresponding Device En BIT in C2PW.
-					 */
-					C2PW &= ~Local0
-				}
-				If ((CPWE != 0) && (C2PW == 0)) {
-					/*
-					 * If CPU WAKE EN is set, Clear it. Clear CPU WAKE EN
-					 * by writing 0.
-					 */
-					CPWE = 0
-				}
-			}
-		}
-		Return (0)
-	}
+	#include "tcss_cpu_wake.asl"
 
 	Method (_OSC, 4, Serialized)
 	{
@@ -352,16 +271,7 @@ Scope (\_SB.PCI0)
 		,     20
 	}
 
-	/*
-	 * Operation region defined to access the IOM REGBAR. Get the MCHBAR in offset
-	 * 0x48 in B0:D0:F0. REGBAR Base address is in offset 0x7110 of MCHBAR.
-	 */
-	OperationRegion (MBAR, SystemMemory, (GMHB() + 0x7100), 0x1000)
-	Field (MBAR, ByteAcc, NoLock, Preserve)
-	{
-		Offset(0x10),
-		RBAR, 64        /* RegBar, offset 0x7110 in MCHBAR */
-	}
+	#include "tcss_iom.asl"
 
 	/*
 	 * Operation region defined to access the pCode mailbox interface. Get the MCHBAR
@@ -396,33 +306,6 @@ Scope (\_SB.PCI0)
 		}
 		Return (0)
 	}
-
-	/*
-	 * IOM REG BAR Base address is in offset 0x7110 in MCHBAR.
-	 */
-	Method (IOMA, 0)
-	{
-		Return (^RBAR & ~0x1)
-	}
-
-	/*
-	 * From RegBar Base, IOM_TypeC_SW_configuration_1 is in offset 0xC10040, where
-	 * 0x40 is the register offset.
-	 */
-	OperationRegion (IOMR, SystemMemory, (IOMA() + 0xC10000), 0x100)
-	Field (IOMR, DWordAcc, NoLock, Preserve)
-	{
-		Offset(0x40),
-		,     15,
-		TD3C, 1,          /* [15:15] Type C D3 cold bit */
-		TACK, 1,          /* [16:16] IOM Acknowledge bit */
-		DPOF, 1,          /* [17:17] Set 1 to indicate IOM, all the */
-				  /* display is OFF, clear otherwise */
-		Offset(0x70),     /* Physical addr is offset 0x70. */
-		IMCD, 32,         /* R_SA_IOM_BIOS_MAIL_BOX_CMD */
-		IMDA, 32          /* R_SA_IOM_BIOS_MAIL_BOX_DATA */
-	}
-
 	/*
 	 * TBT Group0 ON method
 	 */

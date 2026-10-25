@@ -4,7 +4,7 @@ config BOARD_CWWK_ADL_N_COMMON
 	def_bool y
 	select BOARD_ROMSIZE_KB_16384
 	select CRB_TPM
-	select DRIVERS_UART_8250IO
+	select DRIVERS_UART_8250IO if !BOARD_CWWK_CW_NAS_ADLN_K
 	select FSP_TYPE_IOT
 	select HAVE_ACPI_RESUME
 	select HAVE_ACPI_TABLES
@@ -19,6 +19,12 @@ config BOARD_CWWK_CW_ADL_4L_V1
 config BOARD_CWWK_CW_ADLNTB_1C2L_V3
 	select BOARD_CWWK_ADL_N_COMMON
 
+config BOARD_CWWK_CW_NAS_ADLN_K
+	select BOARD_CWWK_ADL_N_COMMON
+	select NO_UART_ON_SUPERIO
+	select MAINBOARD_HAS_TPM2
+	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
+
 if BOARD_CWWK_ADL_N_COMMON
 
 config MAINBOARD_DIR
@@ -27,24 +33,40 @@ config MAINBOARD_DIR
 config VARIANT_DIR
 	default "cw-adl-4l-v1.0"      if BOARD_CWWK_CW_ADL_4L_V1
 	default "cw-adlntb-1c2l-v3.0" if BOARD_CWWK_CW_ADLNTB_1C2L_V3
+	default "cw-nas-adln-k" if BOARD_CWWK_CW_NAS_ADLN_K
 
 config MAINBOARD_PART_NUMBER
 	default "CW-ADL-4L-V1.0"      if BOARD_CWWK_CW_ADL_4L_V1
 	default "CW-ADLNTB-1C2L-V3.0" if BOARD_CWWK_CW_ADLNTB_1C2L_V3
+	default "CW-NAS-ADLN-K" if BOARD_CWWK_CW_NAS_ADLN_K
 
 config MAINBOARD_SMBIOS_PRODUCT_NAME
 	default "CW-ADL-4L-V1.0"      if BOARD_CWWK_CW_ADL_4L_V1
 	default "CW-X86-P5-V3"        if BOARD_CWWK_CW_ADLNTB_1C2L_V3
+	default "CW-NAS-ADLN-K" if BOARD_CWWK_CW_NAS_ADLN_K
 
 config MAINBOARD_VERSION
 	default "CW-ADL-4L-V1.0"      if BOARD_CWWK_CW_ADL_4L_V1
 	default "CW-ADLNTB-1C2L-V3.0" if BOARD_CWWK_CW_ADLNTB_1C2L_V3
+	default "CW-NAS-ADLN-K" if BOARD_CWWK_CW_NAS_ADLN_K
 
 # Override the default variant behavior, since the data.vbt is the same
 config INTEL_GMA_VBT_FILE
 	default "src/mainboard/\$(MAINBOARDDIR)/data.vbt"
 
+config DEVICETREE
+	default "devicetree_nas_k.cb" if BOARD_CWWK_CW_NAS_ADLN_K
+
 config NO_POST
 	default y
+
+# The vendor firmware rewrites its variable store at the start of the BIOS region after an
+# update from its own OS tools; keep coreboot data out of that range.
+config FMDFILE
+	default "src/mainboard/\$(CONFIG_MAINBOARD_DIR)/nas_k_ami_safe.fmd" if BOARD_CWWK_CW_NAS_ADLN_K
+
+# The TCSS ports are wired as Type-A without a USB4 topology; the board ACPI has no D3cold support.
+config D3COLD_SUPPORT
+	default n if BOARD_CWWK_CW_NAS_ADLN_K
 
 endif

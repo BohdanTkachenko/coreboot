@@ -8,5 +8,6 @@
 
 void bootblock_mainboard_early_init(void)
 {
-	ite_enable_serial(UART_DEV, CONFIG_TTYS0_BASE);
+	if (!CONFIG(BOARD_CWWK_CW_NAS_ADLN_K))
+		ite_enable_serial(UART_DEV, CONFIG_TTYS0_BASE);
 }

@@ -19,6 +19,9 @@ DefinitionBlock(
 	Device (\_SB.PCI0) {
 		#include <soc/intel/common/block/acpi/acpi/northbridge.asl>
 		#include <soc/intel/alderlake/acpi/southbridge.asl>
+#if CONFIG(BOARD_CWWK_CW_NAS_ADLN_K)
+		#include "nas_k_tcss_usb.asl"
+#endif
 	}
 
 	#include <southbridge/intel/common/acpi/sleepstates.asl>

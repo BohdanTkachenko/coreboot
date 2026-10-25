@@ -1,0 +1,8 @@
+Category: misc
+Board URL: https://cwwk.net/
+Board name: CW-NAS-ADLN-K
+ROM package: SOIC-8
+ROM protocol: SPI
+ROM socketed: n
+Flashrom support: y
+Release year: 2024

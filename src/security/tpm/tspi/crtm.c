@@ -225,6 +225,14 @@ tpm_result_t tspi_measure_cache_to_pcr(void)
 #if !CONFIG(VBOOT_RETURN_FROM_VERSTAGE)
 static void recover_tpm_log(int is_recovery)
 {
+	/*
+	 * When the TPM is set up in ramstage, pre-RAM events are only cached and
+	 * tpm_setup() does not extend them on S3 resume. The bootblock may not
+	 * know yet that it is resuming, so drop its cached events here.
+	 */
+	if (is_recovery && !CONFIG(VBOOT) && !CONFIG(TPM_MEASURED_BOOT_INIT_BOOTBLOCK))
+		return;
+
 	const void *preram_log = _tpm_log;
 	void *ram_log = tpm_log_cbmem_init();
 

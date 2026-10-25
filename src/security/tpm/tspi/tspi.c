@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 
+#include <acpi/acpi.h>
 #include <console/console.h>
 #include <security/tpm/tspi/crtm.h>
 #include <security/tpm/tspi/logs.h>
@@ -226,6 +227,17 @@ tpm_result_t tpm_extend_pcr(int pcr, enum vb2_hash_algorithm digest_algo,
 
 	if (!digest)
 		return TPM_IOERROR;
+
+	/*
+	 * On S3 resume the TPM restores its PCRs and tpm_setup() does not replay
+	 * the measurement cache, so an event recorded before the TPM is set up
+	 * would never be extended. Logging it would make the event log disagree
+	 * with the PCRs.
+	 */
+	if (!tspi_tpm_is_setup() && acpi_is_wakeup_s3()) {
+		printk(BIOS_DEBUG, "TPM: Not logging `%s` on S3 resume\n", name);
+		return TPM_SUCCESS;
+	}
 
 	if (tspi_tpm_is_setup()) {
 		rc = tlcl_lib_init();

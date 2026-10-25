@@ -25,6 +25,37 @@ config BOARD_CWWK_CW_NAS_ADLN_K
 	select MAINBOARD_HAS_TPM2
 	select SOC_INTEL_COMMON_BLOCK_HDA_VERB
 
+config CWWK_SIO_GPIO_UART
+	bool "Use a GPIO header pin for debug serial output"
+	depends on BOARD_CWWK_CW_NAS_ADLN_K
+	default n
+	select HAVE_UART_SPECIAL
+	select FIXED_UART_FOR_CONSOLE
+	select UART_OVERRIDE_BAUDRATE
+	help
+	  Bit-bang a transmit-only 3.3 V console on one signal pin of the
+	  GPIO header; the board has no COM header. There is no receive line
+	  and no UART for the payload or OS. Nothing is sent from SMM, where
+	  the OS may be using the Super I/O.
+
+config CWWK_SIO_GPIO_UART_BAUD
+	int "GPIO serial baud rate"
+	depends on CWWK_SIO_GPIO_UART
+	range 9600 38400
+	default 38400
+	help
+	  Configure the receiving adapter to the same rate. The software UART
+	  does not support rates above 38400 baud.
+
+config CWWK_SIO_GPIO_UART_TX_PIN
+	int "GPIO header pin for serial TX (1-8)"
+	depends on CWWK_SIO_GPIO_UART
+	range 1 8
+	default 1
+	help
+	  GPIO header signal pin: 1=GP10, 2=GP22, 3=GP31, 4=GP32,
+	  5=GP33, 6=GP41, 7=GP45, 8=GP63. Connect it to the adapter RX.
+
 if BOARD_CWWK_ADL_N_COMMON
 
 config MAINBOARD_DIR

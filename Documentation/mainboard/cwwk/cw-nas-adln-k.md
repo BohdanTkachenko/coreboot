@@ -76,6 +76,11 @@ with `gpio-it87` when the kernel enables `GPIO_IT87`.
 | 7 | GP45 | 8 | GP63 |
 | 9 | GND | 10 | 5 V |
 
+`CWWK_SIO_GPIO_UART` turns one of the signal pins (`CWWK_SIO_GPIO_UART_TX_PIN`,
+pin 1 by default) into a transmit-only software serial console, 38400 baud by
+default. Connect a 3.3 V USB serial adapter's RX and ground. The console is
+not available to the payload or operating system.
+
 ## Status
 
 Working:
